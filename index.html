@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>职业规划模拟器</title>
+<style>
+/* ============================================ */
+/*  RESET & BASE                                */
+/* ============================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", -apple-system, sans-serif;
+  background: #f8f9fc;
+  color: #2d3748;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ============================================ */
+/*  GAME SECTION                                */
+/* ============================================ */
+#game-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8f9fc 0%, #e8eef5 40%, #f0f4f8 100%);
+  position: relative;
+  overflow: hidden;
+}
+#game-section::before {
+  content: "";
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(100,140,200,0.06) 0%, transparent 70%);
+  top: -200px; right: -200px; border-radius: 50%;
+  pointer-events: none;
+}
+#game-section::after {
+  content: "";
+  position: absolute;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(200,150,50,0.05) 0%, transparent 70%);
+  bottom: -150px; left: -150px; border-radius: 50%;
+  pointer-events: none;
+}
+
+.game-container {
+  width: 100%; max-width: 720px;
+  padding: 2rem;
+  position: relative; z-index: 1;
+}
+
+/* Title Screen */
+.game-title-screen {
+  text-align: center;
+  animation: fadeInUp 0.8s ease-out;
+}
+.game-badge {
+  display: inline-block;
+  padding: 0.35rem 1.2rem;
+  border: 1px solid rgba(200,150,50,0.35);
+  border-radius: 50px;
+  font-size: 0.8rem;
+  color: #b8860b;
+  letter-spacing: 0.15em;
+  margin-bottom: 1.5rem;
+}
+.game-title {
+  font-size: 2.4rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #e6a800, #e05a20);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.8rem;
+  line-height: 1.3;
+}
+.game-subtitle {
+  font-size: 1rem;
+  color: #5a6c7d;
+  margin-bottom: 2.5rem;
+}
+.game-start-btn {
+  display: inline-block;
+  padding: 0.9rem 3rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #e6a800, #e05a20);
+  border: none; border-radius: 50px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.3s;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 16px rgba(230,168,0,0.2);
+}
+.game-start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(230,168,0,0.35);
+}
+
+/* Game Card */
+.game-card {
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 20px;
+  padding: 2.2rem 2rem;
+  backdrop-filter: blur(20px);
+  animation: fadeInUp 0.5s ease-out;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.06);
+}
+.game-round-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 1rem;
+  background: rgba(230,168,0,0.08);
+  border: 1px solid rgba(230,168,0,0.2);
+  border-radius: 50px;
+  font-size: 0.8rem;
+  color: #b8860b;
+  margin-bottom: 1.2rem;
+}
+.game-round-badge .dot {
+  width: 8px; height: 8px;
+  background: #e6a800;
+  border-radius: 50%;
+  animation: pulse-dot 1.5s infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.6); }
+}
+.game-narrative {
+  font-size: 1.05rem;
+  color: #3d4a5c;
+  margin-bottom: 1.8rem;
+  padding: 1rem 1.2rem;
+  background: rgba(0,0,0,0.02);
+  border-left: 3px solid rgba(230,168,0,0.35);
+  border-radius: 0 8px 8px 0;
+  line-height: 1.8;
+}
+.game-status {
+  display: flex; gap: 1rem; flex-wrap: wrap;
+  margin-bottom: 1.8rem;
+}
+.game-stat {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.8rem; color: #5a6c7d;
+  padding: 0.3rem 0.8rem;
+  background: rgba(0,0,0,0.03);
+  border-radius: 50px;
+}
+.game-stat .label { opacity: 0.7; }
+.game-stat .value { color: #b8860b; font-weight: 600; }
+
+.game-choices { display: flex; flex-direction: column; gap: 0.8rem; }
+.game-choice-btn {
+  display: flex; align-items: flex-start; gap: 0.8rem;
+  width: 100%; text-align: left;
+  padding: 1rem 1.2rem;
+  background: rgba(0,0,0,0.02);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s;
+  color: #3d4a5c;
+  font-size: 0.95rem;
+  font-family: inherit;
+  line-height: 1.6;
+}
+.game-choice-btn:hover {
+  background: rgba(230,168,0,0.06);
+  border-color: rgba(230,168,0,0.35);
+  transform: translateX(4px);
+}
+.game-choice-btn .choice-letter {
+  flex-shrink: 0;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: rgba(230,168,0,0.1);
+  color: #b8860b;
+}
+.game-choice-btn:hover .choice-letter {
+  background: rgba(230,168,0,0.22);
+}
+
+/* Feedback overlay */
+.feedback-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+  background: rgba(240,242,246,0.75);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.3s ease-out;
+}
+.feedback-card {
+  background: rgba(255,255,255,0.96);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 20px;
+  padding: 2rem 2.5rem;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+}
+.feedback-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+.feedback-text { font-size: 1.1rem; color: #3d4a5c; margin-bottom: 1.2rem; line-height: 1.7; }
+.feedback-changes { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; margin-bottom: 1.5rem; }
+.feedback-change {
+  font-size: 0.85rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 50px;
+  border: 1px solid;
+}
+.feedback-change.positive { color: #16a34a; border-color: rgba(22,163,74,0.3); background: rgba(22,163,74,0.06); }
+.feedback-change.negative { color: #dc2626; border-color: rgba(220,38,38,0.3); background: rgba(220,38,38,0.06); }
+.feedback-continue {
+  padding: 0.7rem 2.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #e6a800, #e05a20);
+  border: none; border-radius: 50px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  font-family: inherit;
+}
+.feedback-continue:hover { transform: scale(1.05); }
+
+/* Ending Screen */
+.ending-screen {
+  text-align: center;
+  animation: fadeInUp 0.6s ease-out;
+}
+.ending-grade {
+  font-size: 5rem; font-weight: 900;
+  background: linear-gradient(135deg, #e05a20, #e6a800);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+.ending-title {
+  font-size: 1.8rem; font-weight: 700;
+  color: #b8860b;
+  margin-bottom: 1rem;
+}
+.ending-desc {
+  font-size: 1rem; color: #4a5568;
+  line-height: 1.8; margin-bottom: 1.5rem;
+  padding: 1.2rem;
+  background: rgba(0,0,0,0.02);
+  border-radius: 12px;
+}
+.ending-data {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  background: rgba(230,168,0,0.08);
+  border: 1px solid rgba(230,168,0,0.2);
+  border-radius: 50px;
+  font-size: 0.8rem;
+  color: #b8860b;
+  margin-bottom: 2rem;
+}
+.ending-bridge {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(100,140,200,0.06), rgba(230,168,0,0.05));
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.ending-bridge p { font-size: 0.95rem; color: #4a5568; line-height: 1.8; }
+.scroll-down-btn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.8rem 2.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2d3748;
+  background: rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.25s;
+  font-family: inherit;
+  text-decoration: none;
+}
+.scroll-down-btn:hover { background: rgba(0,0,0,0.08); }
+.scroll-down-btn .arrow { display: inline-block; animation: bounce 1.5s infinite; margin-left: 0.3rem; }
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* ============================================ */
+/*  TRANSITION DIVIDER                          */
+/* ============================================ */
+#transition-divider {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  background: linear-gradient(180deg, #f8f9fc, #edf2f7);
+}
+.divider-line {
+  width: 80px; height: 3px;
+  background: linear-gradient(90deg, transparent, #e6a800, transparent);
+  margin: 0 auto 2rem;
+}
+
+/* ============================================ */
+/*  PRESENTATION SECTION                        */
+/* ============================================ */
+#presentation-section {
+  background: #edf2f7;
+  padding-bottom: 4rem;
+}
+.pres-slide {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.pres-slide:last-of-type { border-bottom: none; }
+
+.pres-slide-header {
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 2rem;
+}
+.pres-part-num {
+  font-size: 3rem; font-weight: 900;
+  color: rgba(180,130,10,0.12);
+  line-height: 1;
+}
+.pres-part-title {
+  font-size: 1.6rem; font-weight: 700;
+  color: #1a1a2e;
+}
+.pres-part-subtitle {
+  font-size: 0.9rem;
+  color: #5a6c7d;
+  margin-top: 0.2rem;
+}
+
+.pres-content { color: #3d4a5c; }
+.pres-content h3 {
+  font-size: 1.1rem; color: #b8860b;
+  margin: 1.5rem 0 0.6rem;
+  padding-left: 1rem;
+  border-left: 3px solid rgba(230,168,0,0.35);
+}
+.pres-content p {
+  margin-bottom: 0.8rem;
+  line-height: 1.8;
+  padding-left: 1rem;
+}
+.pres-content ul {
+  list-style: none;
+  padding-left: 1rem;
+  margin-bottom: 1rem;
+}
+.pres-content ul li {
+  padding: 0.35rem 0;
+  line-height: 1.7;
+}
+.pres-content ul li::before {
+  content: "▸";
+  color: #b8860b;
+  margin-right: 0.6rem;
+  font-size: 0.7rem;
+}
+.pres-highlight {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  background: rgba(230,168,0,0.1);
+  border-radius: 4px;
+  color: #b8860b;
+  font-weight: 600;
+}
+
+.pres-img {
+  width: 100%; max-width: 700px;
+  margin: 1.5rem auto;
+  display: block;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.pres-img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 14px 44px rgba(0,0,0,0.14);
+}
+.pres-img-caption {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #6b7d8e;
+  margin-top: -0.8rem;
+  margin-bottom: 1.2rem;
+}
+
+.pres-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 1rem 1rem;
+}
+.pres-card {
+  background: rgba(0,0,0,0.02);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 12px;
+  padding: 1.2rem;
+}
+.pres-card h4 { font-size: 0.95rem; color: #b8860b; margin-bottom: 0.5rem; }
+.pres-card p { font-size: 0.85rem; padding-left: 0; color: #4a5568; }
+
+.pres-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem 1rem;
+  font-size: 0.9rem;
+}
+.pres-table th {
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  background: rgba(230,168,0,0.08);
+  color: #b8860b;
+  font-weight: 600;
+}
+.pres-table td {
+  padding: 0.5rem 0.8rem;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  color: #4a5568;
+}
+
+/* Timeline */
+.timeline { position: relative; padding-left: 2rem; margin: 1rem 0 1.5rem; }
+.timeline::before {
+  content: "";
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, #e6a800, rgba(230,168,0,0.1));
+}
+.timeline-item {
+  position: relative;
+  padding: 0.5rem 0 1rem 1.5rem;
+}
+.timeline-item::before {
+  content: "";
+  position: absolute; left: -2.2rem; top: 0.8rem;
+  width: 10px; height: 10px;
+  background: #e6a800;
+  border-radius: 50%;
+}
+.timeline-item .tl-period { font-size: 0.8rem; color: #b8860b; font-weight: 600; }
+.timeline-item .tl-content { font-size: 0.9rem; color: #4a5568; }
+
+/* ============================================ */
+/*  REFERENCES                                  */
+/* ============================================ */
+#references-section {
+  max-width: 900px; margin: 0 auto;
+  padding: 3rem 2rem 4rem;
+}
+#references-section h2 {
+  font-size: 1.5rem; color: #b8860b;
+  margin-bottom: 1.5rem;
+}
+.ref-list { font-size: 0.78rem; color: #6b7d8e; line-height: 2; }
+.ref-list li { word-break: break-all; }
+
+/* ============================================ */
+/*  MEMBER CREDITS                              */
+/* ============================================ */
+#credits-section {
+  max-width: 900px; margin: 0 auto;
+  padding: 3rem 2rem 5rem;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+#credits-section h2 {
+  font-size: 1.5rem; color: #b8860b;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.credits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.credit-card {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1rem 1.3rem;
+  background: rgba(0,0,0,0.02);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.credit-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+}
+.credit-icon {
+  flex-shrink: 0;
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px;
+  font-size: 1.3rem;
+  background: linear-gradient(135deg, rgba(230,168,0,0.12), rgba(224,90,32,0.1));
+}
+.credit-info .credit-role {
+  font-size: 0.78rem; color: #6b7d8e;
+  margin-bottom: 0.15rem;
+}
+.credit-info .credit-names {
+  font-size: 0.95rem; color: #2d3748;
+  font-weight: 600;
+}
+
+/* ============================================ */
+/*  IMAGE LIGHTBOX                              */
+/* ============================================ */
+.lightbox-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.92);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+  cursor: pointer;
+  animation: fadeIn 0.2s ease-out;
+}
+.lightbox-overlay img {
+  max-width: 92vw; max-height: 92vh;
+  border-radius: 8px;
+}
+
+/* ============================================ */
+/*  FLOATING NAV                                */
+/* ============================================ */
+.floating-nav {
+  position: fixed; bottom: 2rem; right: 2rem;
+  z-index: 150;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.nav-dot {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(0,0,0,0.12);
+  color: #5a6c7d;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem;
+  transition: all 0.2s;
+  font-family: inherit;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.nav-dot:hover { border-color: #e6a800; color: #b8860b; }
+.nav-dot.active { border-color: #e6a800; color: #b8860b; background: rgba(230,168,0,0.1); }
+
+/* ============================================ */
+/*  ANIMATIONS                                  */
+/* ============================================ */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+.reveal { animation: slideUp 0.6s ease-out both; }
+
+/* ============================================ */
+/*  PROGRESS BAR (game rounds)                  */
+/* ============================================ */
+.game-progress {
+  display: flex; gap: 0.4rem; margin-bottom: 1.5rem;
+}
+.game-progress-dot {
+  flex: 1; height: 3px;
+  background: rgba(0,0,0,0.08);
+  border-radius: 2px;
+  transition: background 0.3s;
+}
+.game-progress-dot.done { background: #e6a800; }
+.game-progress-dot.current { background: rgba(230,168,0,0.45); }
+
+/* ============================================ */
+/*  RESPONSIVE                                  */
+/* ============================================ */
+@media (max-width: 768px) {
+  .game-title { font-size: 1.6rem; }
+  .game-card { padding: 1.5rem 1.2rem; }
+  .pres-slide { padding: 2rem 1rem; }
+  .pres-part-title { font-size: 1.3rem; }
+  .pres-part-num { font-size: 2rem; }
+  .pres-card-grid { grid-template-columns: 1fr; }
+  .feedback-card { margin: 0 1rem; padding: 1.5rem; }
+  .floating-nav { bottom: 1rem; right: 1rem; }
+  .credits-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================ */
+/*  SCROLLBAR                                   */
+/* ============================================ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #e8ecf1; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.22); }
+
+/* ============================================ */
+/*  TYPEWRITER CURSOR                           */
+/* ============================================ */
+.type-cursor::after {
+  content: "▍";
+  animation: blink 1s infinite;
+  color: #e6a800;
+}
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+
+<!-- ============================================ -->
+<!--  GAME SECTION                                -->
+<!-- ============================================ -->
+<section id="game-section">
+  <div class="game-container" id="game-container">
+    <!-- Dynamically filled by JS -->
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!--  TRANSITION DIVIDER                          -->
+<!-- ============================================ -->
+<div id="transition-divider" style="display:none;">
+  <div class="pres-slide" style="border-bottom:none; text-align:center;">
+    <div class="divider-line"></div>
+    <h2 style="font-size:1.5rem; color:#1a1a2e; margin-bottom:1rem;">
+      从模拟走向现实
+    </h2>
+    <p style="color:#4a5568; max-width:600px; margin:0 auto; line-height:1.8;">
+      游戏中的不同命运，在现实中正真实上演。大二、大三是职业规划的黄金窗口，
+      每一个选择都在悄然塑造未来。接下来，让我们系统探讨：<br>
+      <strong style="color:#b8860b;">在AI时代，如何做出真正正确的职业规划。</strong>
+    </p>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!--  PRESENTATION SECTION                        -->
+<!-- ============================================ -->
+<div id="presentation-section" style="display:none;">
+
+  <!-- 开场白 -->
+  <div class="pres-slide" id="pres-intro">
+    <div class="pres-slide-header">
+      <div class="pres-part-num">✦</div>
+      <div>
+        <div class="pres-part-title">开场白</div>
+        <div class="pres-part-subtitle">AI时代的复合型人才成长指南</div>
+      </div>
+    </div>
+    <div class="pres-content">
+      <p>各位老师、同学，大家好。今天我们探讨的主题是：<span class="pres-highlight">在AI深刻改变工作方式、就业竞争持续加剧、全社会追求"复合型"人才的背景下</span>，作为在校大学生，我们该如何规划自己的未来？</p>
+      <p>我们将从<strong>四个核心问题</strong>出发，结合教育部最新政策、招聘数据和实际案例，给出建议。</p>
+    </div>
+  </div>
+
+  <!-- 第一部分：AI时代与复合型趋势 -->
+  <div class="pres-slide" id="pres-part1">
+    <div class="pres-slide-header">
+      <div class="pres-part-num">01</div>
+      <div>
+        <div class="pres-part-title">AI时代与复合型趋势下，如何规划自己的未来？</div>
+        <div class="pres-part-subtitle">认清形势 · 建立动态锚点 · 构建能力矩阵</div>
+      </div>
+    </div>
+    <div class="pres-content">
+      <h3>一、认清AI的双重影响</h3>
+      <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1rem;">
+        <div style="flex:1; min-width:200px;">
+          <p><strong>🔴 替代效应：</strong>AI将替代重复性、低技能岗位（如基础数据录入、流水线作业），工业和服务业领域受冲击明显。</p>
+        </div>
+        <div style="flex:1; min-width:200px;">
+          <p><strong>🟢 创造效应：</strong>同时催生新岗位——AI技术开发、应用维护、AI产品销售、数据分析等。企业需要的是<span class="pres-highlight">"人机协同"的创造者</span>。</p>
+        </div>
+      </div>
+      <img class="pres-img" src="./AI时代职业规划汇报图表包/03_技能变化与AI冲击.png" alt="技能变化与AI冲击" onclick="openLightbox(this.src)" loading="lazy">
+      <div class="pres-img-caption">▲ 图：AI时代技能需求变化与企业招聘偏好迁移（来源：2026校招数据）</div>
+
+      <h3>二、建立"动态职业锚点"，放弃固定职业目标</h3>
+      <p>新质生产力业态下，行业变化加快。<span class="pres-highlight">动态锚点</span>指根据行业趋势和个人成长不断调整方向，保持职业韧性，避免因锚点僵化而陷入瓶颈。</p>
+
+      <h3>三、构建"可持续能力矩阵"——兼顾短期就业与长期成长</h3>
+      <div class="pres-card-grid">
+        <div class="pres-card">
+          <h4>📌 短期保障</h4>
+          <p>专业知识基础、沟通协作、问题解决、职场适应力</p>
+        </div>
+        <div class="pres-card">
+          <h4>🚀 长期驱动</h4>
+          <p>终身学习能力、环境洞察力、跨界迁移能力</p>
+        </div>
+      </div>
+
+      <h3>四、将"通"与"专"结合</h3>
+      <p>本科教育应<span class="pres-highlight">"通专结合"</span>：既要有专业深度以应对即时就业，也要有宽口径的通识基础（人文、社科、逻辑思维）以应对未来职业变化。</p>
+
+      <img class="pres-img" src="./AI时代职业规划汇报图表包/01_毕业生规模对比.png" alt="毕业生规模与就业形势" onclick="openLightbox(this.src)" loading="lazy">
+      <div class="pres-img-caption">▲ 图：全国高校毕业生规模持续增长，就业竞争加剧（来源：教育部统计数据）</div>
+    </div>
+  </div>
+
+  <!-- 第二部分：现在该做什么 -->
+  <div class="pres-slide" id="pres-part2">
+    <div class="pres-slide-header">
+      <div class="pres-part-num">02</div>
+      <div>
+        <div class="pres-part-title">作为在校大学生，现在该做什么才能更有竞争力？</div>
+        <div class="pres-part-subtitle">专业基础 · AI技能 · 实践能力 · 创新思维 · 多元就业观</div>
+      </div>
+    </div>
+    <div class="pres-content">
+      <h3>一、扎实专业基础 + 主动学习AI相关技能</h3>
+      <p>不要只满足课堂知识。主动选修<span class="pres-highlight">"AI+"课程</span>（如大数据分析、人工智能应用），参与跨学科学习社群。2026年校招中，<strong>超九成头部企业岗位要求具备AI能力</strong>。</p>
+
+      <h3>二、提升实践能力：参与项目式学习、实习、竞赛</h3>
+      <p>通过实习、校企合作项目、创新创业大赛锻炼"从想法到成果"的落地能力。<span class="pres-highlight">大二是黄金窗口期</span>，积累第一份行业相关经历至关重要。</p>
+
+      <h3>三、培养创新意识和批判性思维</h3>
+      <p>AI难以替代的是<span class="pres-highlight">创新、复杂问题解决、批判性重构能力</span>。可通过科研项目、跨学科讨论、创业竞赛来锻炼。</p>
+
+      <h3>四、利用学校资源，主动接受职业规划指导</h3>
+      <p>从大一开始参与职业规划课程、导师制、职业测评，<strong>不要等到大四才思考就业</strong>。</p>
+
+      <h3>五、调整就业观念，接受多元就业形态</h3>
+      <p>调研显示，超六成应届生在未找到心仪工作时愿意接受蓝领工作（如服务业、制造业）。关键在于<strong>从基层做起，快速成长，积累经验</strong>。</p>
+
+      <img class="pres-img" src="./AI时代职业规划汇报图表包/04_双千计划能力提升路径.png" alt="双千计划能力提升路径" onclick="openLightbox(this.src)" loading="lazy">
+      <div class="pres-img-caption">▲ 图：教育部"双千计划"微专业与职业能力培训课程体系（来源：教育部）</div>
+    </div>
+  </div>
+
+  <!-- 第三部分：具体行动清单 -->
+  <div class="pres-slide" id="pres-part3">
+    <div class="pres-slide-header">
+      <div class="pres-part-num">03</div>
+      <div>
+        <div class="pres-part-title">对个人职业规划的具体建议</div>
+        <div class="pres-part-subtitle">信息体系 · 学习闭环 · 软技能 · 国家战略 · 时间规划</div>
+      </div>
+    </div>
+    <div class="pres-content">
+      <h3>一、建立"信息获取体系"，打破信息壁垒</h3>
+      <p>借助招聘平台、行业报告、职业测评工具，主动搜集目标岗位的技能要求与发展趋势，明确自身差距。</p>
+
+      <h3>二、构建"学习→实践→反思→优化"的闭环</h3>
+      <p>学习后必须实践，实践中必须反思，反思后优化迭代。这是形成<span class="pres-highlight">可持续能力</span>的核心方法。</p>
+
+      <h3>三、注重软技能与人文素养</h3>
+      <p>沟通、团队协作、共情能力、文化适应力等软技能在AI时代更加重要——这是<strong>人与机器的根本区别</strong>。</p>
+
+      <h3>四、将个人规划与国家战略结合</h3>
+      <p>关注国家重点发展行业：</p>
+      <div class="pres-card-grid">
+        <div class="pres-card"><h4>🤖 人工智能</h4><p>AI技术研发与应用落地</p></div>
+        <div class="pres-card"><h4>⚡ 新能源</h4><p>双碳战略驱动</p></div>
+        <div class="pres-card"><h4>🏥 医疗健康</h4><p>大健康产业升级</p></div>
+        <div class="pres-card"><h4>📡 电子/通信/半导体</h4><p>国产替代需求</p></div>
+        <div class="pres-card"><h4>🚗 汽车</h4><p>智能网联新能源汽车</p></div>
+        <div class="pres-card"><h4>🛩️ 低空经济</h4><p>无人机与空中交通</p></div>
+      </div>
+
+      <h3>五、大二至大四的节奏建议</h3>
+      <div class="timeline">
+        <div class="timeline-item"><div class="tl-period">大二下学期</div><div class="tl-content">确定交叉赛道，学习微专业（教育部双千计划课程），积累基础项目</div></div>
+        <div class="timeline-item"><div class="tl-period">大二暑假至大三上</div><div class="tl-content">投递目标行业的日常实习，积累实战成果</div></div>
+        <div class="timeline-item"><div class="tl-period">大三下学期</div><div class="tl-content">冲刺头部企业暑期实习（转正率超50%）</div></div>
+        <div class="timeline-item"><div class="tl-period">大四</div><div class="tl-content">成果变现，拿到校招offer或继续优化</div></div>
+      </div>
+      <img class="pres-img" src="./AI时代职业规划汇报图表包/05_大二到毕业职业规划时间线.png" alt="大二到毕业职业规划时间线" onclick="openLightbox(this.src)" loading="lazy">
+      <div class="pres-img-caption">▲ 图：大二至毕业全周期职业规划关键节点（来源：综合教育部政策与校招数据）</div>
+    </div>
+  </div>
+
+  <!-- 第四部分：冷门专业的价值 -->
+  <div class="pres-slide" id="pres-part4">
+    <div class="pres-slide-header">
+      <div class="pres-part-num">04</div>
+      <div>
+        <div class="pres-part-title">就业压力大的环境下，"就业前景一般"的专业还有什么意义？</div>
+        <div class="pres-part-subtitle">没有绝对的冷门专业，只有未被复合化开发的能力</div>
+      </div>
+    </div>
+    <div class="pres-content">
+      <h3>核心结论：<span class="pres-highlight">没有绝对的冷门专业，只有未被复合化开发的能力。</span></h3>
+
+      <h3>一、专业 ≠ 职业</h3>
+      <p>美国数据显示，本科毕业生工作与专业高度相关的比例仅<strong>27.3%</strong>，人文社科更低。你学什么，不代表你将来一定做什么。</p>
+
+      <h3>二、通识教育培养的是长期竞争力</h3>
+      <p>人文社科类专业起薪或初期就业率可能低于理工科，但在长期职业生涯中表现出<strong>更高的适应能力、职业满意度和后发优势</strong>。</p>
+
+      <h3>三、软技能正是"冷门专业"的强项</h3>
+      <p>雇主最看重的可雇佣能力中，<span class="pres-highlight">沟通、团队合作、问题解决、自我管理</span>等软技能排在前列。这些恰恰是人文、社科、艺术类专业通过大量阅读、写作、讨论训练出来的。</p>
+
+      <h3>四、长期幸福感与专业"热度"无关</h3>
+      <p>盖洛普调查显示，人文与社会科学毕业生的工作满意度与成就感<strong>并不低于</strong>工科毕业生。教育专业毕业生在工作意义感上甚至更高。</p>
+
+      <h3>五、国家战略带来的"伪冷门"专业价值爆发</h3>
+      <table class="pres-table">
+        <tr><th>冷门专业</th><th>对接国家战略</th><th>人才缺口</th></tr>
+        <tr><td>核工程</td><td>双碳战略、核电出海</td><td>巨大</td></tr>
+        <tr><td>水声工程</td><td>海洋强国</td><td>全国毕业生不足6000人</td></tr>
+        <tr><td>遥感科学</td><td>航天强国、智慧城市</td><td>快速增长</td></tr>
+        <tr><td>文物与博物馆学</td><td>文化复兴</td><td>数字文博复合人才稀缺</td></tr>
+        <tr><td>农业工程</td><td>乡村振兴、智慧农业</td><td>缺口持续扩大</td></tr>
+      </table>
+      <p><strong>组合溢价案例：</strong></p>
+      <ul>
+        <li>文物修复 + 3D数字孪生 → 年薪可达30万+</li>
+        <li>水声工程 + AI算法 → 薪资翻倍</li>
+        <li>农业工程 + 物联网/IoT → 智慧农业赛道爆发</li>
+      </ul>
+
+      <h3>六、专业价值的重新发现</h3>
+      <p>调查显示，40岁以上人群中，如果可以重选专业，大多数人会选择<strong>"满足个人激情"</strong>，而非"更好的工作机会"。真正支撑整个职业生涯的，往往是<strong>兴趣、意义感和价值认同</strong>。</p>
+
+      <img class="pres-img" src="./AI时代职业规划汇报图表包/02_促就业岗位供给.png" alt="促就业岗位供给与新业态" onclick="openLightbox(this.src)" loading="lazy">
+      <div class="pres-img-caption">▲ 图：新质生产力与多元业态下的就业岗位供给格局（来源：2026就业市场数据）</div>
+    </div>
+  </div>
+
+  <!-- 第五部分：总结 -->
+  <div class="pres-slide" id="pres-part5">
+    <div class="pres-slide-header">
+      <div class="pres-part-num">05</div>
+      <div>
+        <div class="pres-part-title">总结与行动号召</div>
+        <div class="pres-part-subtitle">真正的铁饭碗，是具备随时适配行业变化的复合能力</div>
+      </div>
+    </div>
+    <div class="pres-content">
+      <div class="pres-card-grid">
+        <div class="pres-card" style="border-color:rgba(230,168,0,0.2);">
+          <h4>🔑 核心结论一</h4>
+          <p>没有永远的热门专业，也没有绝对的冷门行业。真正的铁饭碗，是具备<strong>随时适配行业变化的复合能力</strong>。</p>
+        </div>
+        <div class="pres-card" style="border-color:rgba(230,168,0,0.2);">
+          <h4>⏰ 核心结论二</h4>
+          <p>大二、大三<strong>是职业规划的黄金窗口</strong>，必须摒弃"求职是大四的事"的拖延心态。</p>
+        </div>
+        <div class="pres-card" style="border-color:rgba(230,168,0,0.2);">
+          <h4>🔄 核心结论三</h4>
+          <p>用<strong>"专业×AI"公式</strong>重构自己：以专业知识为底座，以AI工具为抓手，深耕一个垂直场景，建立差异化竞争力。</p>
+        </div>
+        <div class="pres-card" style="border-color:rgba(230,168,0,0.2);">
+          <h4>📚 核心结论四</h4>
+          <p>善于利用教育部<strong>"双千计划"微专业</strong>、企业认证课程、实习与竞赛资源，将技能转化为可量化的成果。</p>
+        </div>
+      </div>
+
+      <img class="pres-img" src="./AI时代职业规划汇报图表包/06_复合型人才四要素图标页.png" alt="复合型人才四要素" onclick="openLightbox(this.src)" loading="lazy">
+      <div class="pres-img-caption">▲ 图：AI时代复合型人才四要素——专业深度 × AI技能 × 软实力 × 实践经验</div>
+
+      <div style="text-align:center; padding:2rem 1rem; background:rgba(230,168,0,0.04); border-radius:16px; margin-top:2rem;">
+        <p style="font-size:1.2rem; color:#b8860b; font-weight:700; margin-bottom:0.8rem;">
+          "从现在开始规划，立即行动，循序渐进。"
+        </p>
+        <p style="color:#4a5568;">
+          你今天的每一次学习与尝试，都会在毕业时的校招中给你最好的答案。
+        </p>
+        <p style="color:#5a6c7d; margin-top:1rem;">谢谢大家！</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 附录：关键数据 -->
+  <div class="pres-slide" id="pres-appendix">
+    <div class="pres-slide-header">
+      <div class="pres-part-num">✦</div>
+      <div>
+        <div class="pres-part-title">附录：关键数据与来源摘要</div>
+      </div>
+    </div>
+    <div class="pres-content">
+      <ul>
+        <li><strong>2026届高校毕业生预计1270万</strong>，核心岗位竞争比45:1。</li>
+        <li>企业明确要求掌握AI工具的岗位<strong>同比增长99.21%</strong>。</li>
+        <li>教育部双千计划：<strong>1000个微专业 + 1000个职业能力培训课程</strong>。</li>
+        <li>微专业学生就业率<strong>显著高于</strong>同专业普通毕业生。</li>
+        <li>暑期实习<strong>转正率超50%</strong>，头部企业可达更高。</li>
+        <li>复合型人才起薪较单一技能者<strong>提升约30%</strong>。</li>
+        <li>40岁以上人群中，更倾向选择<strong>"个人激情"专业</strong>，而非就业热度。</li>
+        <li>冷门战略专业（核工程、水声、遥感等）人才缺口巨大，竞争压力<strong>远小于</strong>热门赛道。</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 参考资料 -->
+  <div id="references-section">
+    <h2>📖 参考资料</h2>
+    <ol class="ref-list">
+      <li>小众却不冷门 他们是行业"刚需"人才_北青网</li>
+      <li>2026冷门专业求生指南:当学历贬值时，什么才是你的救命稻草?_搜狐</li>
+      <li>2025就业热度TOP20出炉!选对专业少走3年弯路，附避坑指南_搜狐</li>
+      <li>海洋科学专业:人才缺口12万，全国毕业生不到6000人_抖音</li>
+      <li>1270万毕业生突围:5个冷门专业专属赛道_牛客网</li>
+      <li>这些曾经的"冷门"专业，如今就业不愁还高薪!_掌上高考</li>
+      <li>"红牌"就业高风险专业及突围建议_掌上高考</li>
+      <li>用高分换就业，2025年招生到了"变盘点"?_学信网</li>
+      <li>热门专业推荐:未来5年最抢手的10类人才，起薪20万+_今日头条</li>
+      <li>华为2026校招核心要求与待遇解析_抖音</li>
+      <li>2026高校春招，银行保险开抢AI人才_36氪</li>
+      <li>华为今年拟校招万余人 料较去年实现两位数增幅_中新网</li>
+      <li>前程无忧《2026届校招市场AI人才需求报告》_中国日报</li>
+      <li>腾讯阿里2026校招启动!AI人才紧缺_CSDN</li>
+      <li>AI热潮下，哪些毕业生更抢手?_中新网</li>
+      <li>《2026校招人才素质白皮书》发布_中国青年报</li>
+      <li>2026校招人才素质白皮书:AI时代校招逻辑生变_新民晚报</li>
+      <li>AI岗位暴涨12倍，平均月薪6万。2026春招数据深度解读_抖音</li>
+      <li>大厂HR:AI时代，我们招什么人?_36氪</li>
+      <li>2026年求职风向标:AI成绝对顶流_CSDN</li>
+      <li>教育部开设人工智能、低空经济等方向"微专业"_教育部</li>
+      <li>微专业:"小而精"的跨学科探索方向_搜狐</li>
+      <li>《中国大学生就业》刊发校长陈克正专题笔谈_青岛科技大学</li>
+      <li>微专业建设的动力机制与可持续发展路径</li>
+      <li>省内多所高校力推，微专业"香"在哪?_江苏教育新闻网</li>
+      <li>西南民族大学:以"四个强化"推动微专业建设</li>
+      <li>大连理工大学:积极探索拔尖创新人才培养新模式_教育部</li>
+      <li>AI时代，传统专业会被淘汰?你需要加上"专业×AI"公式_今日头条</li>
+      <li>文科生以文科思维与技术工具破解大厂求职密码_抖音</li>
+      <li>别再劝退文科!AI时代这5类专业越老越吃香_掌上高考</li>
+      <li>西南大学《智能计算与数据处理》微专业招生简章</li>
+      <li>别大四才慌:大学四年"技能投资"节奏安排(2026版)_CSDN</li>
+      <li>2026版大学生职业规划避坑全景地图_CSDN</li>
+      <li>2026暑期实习开启，转正率超50%别错过机会_新东方</li>
+      <li>不要以为大二离毕业还早!大二实习是黄金期_今日头条</li>
+      <li>2026年高校毕业生就业指导计划_原创力文档</li>
+      <li>应届生校招时间线全攻略:从暑期实习到春招补录</li>
+    </ol>
+  </div>
+
+  <!-- 成员分工 -->
+  <div id="credits-section">
+    <h2>👥 成员分工</h2>
+    <div class="credits-grid">
+      <div class="credit-card">
+        <div class="credit-icon">📊</div>
+        <div class="credit-info">
+          <div class="credit-role">资料收集</div>
+          <div class="credit-names">李汶宣、余子悦、周思宇</div>
+        </div>
+      </div>
+      <div class="credit-card">
+        <div class="credit-icon">💻</div>
+        <div class="credit-info">
+          <div class="credit-role">HTML 制作</div>
+          <div class="credit-names">刘王雨霏</div>
+        </div>
+      </div>
+      <div class="credit-card">
+        <div class="credit-icon">📝</div>
+        <div class="credit-info">
+          <div class="credit-role">讲稿撰写</div>
+          <div class="credit-names">何宏娜</div>
+        </div>
+      </div>
+      <div class="credit-card">
+        <div class="credit-icon">🎤</div>
+        <div class="credit-info">
+          <div class="credit-role">Pre 演讲</div>
+          <div class="credit-names">程予灼、张昊天</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================ -->
+<!--  FLOATING NAVIGATION                         -->
+<!-- ============================================ -->
+<div class="floating-nav" id="floating-nav" style="display:none;">
+  <button class="nav-dot" onclick="scrollToSlide('pres-intro')" title="开场">✦</button>
+  <button class="nav-dot" onclick="scrollToSlide('pres-part1')" title="第一部分">1</button>
+  <button class="nav-dot" onclick="scrollToSlide('pres-part2')" title="第二部分">2</button>
+  <button class="nav-dot" onclick="scrollToSlide('pres-part3')" title="第三部分">3</button>
+  <button class="nav-dot" onclick="scrollToSlide('pres-part4')" title="第四部分">4</button>
+  <button class="nav-dot" onclick="scrollToSlide('pres-part5')" title="总结">5</button>
+  <button class="nav-dot" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="回到顶部">⬆</button>
+</div>
+
+<!-- ============================================ -->
+<!--  IMAGE LIGHTBOX                              -->
+<!-- ============================================ -->
+<div id="lightbox" class="lightbox-overlay" style="display:none;" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<!-- ============================================ -->
+<!--  FEEDBACK OVERLAY (hidden by default)        -->
+<!-- ============================================ -->
+<div class="feedback-overlay" id="feedback-overlay" style="display:none;">
+  <div class="feedback-card">
+    <div class="feedback-icon" id="feedback-icon"></div>
+    <div class="feedback-text" id="feedback-text"></div>
+    <div class="feedback-changes" id="feedback-changes"></div>
+    <button class="feedback-continue" id="feedback-continue-btn" onclick="closeFeedback()">继续 ▸</button>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!--  JAVASCRIPT: GAME ENGINE                     -->
+<!-- ============================================ -->
+<script>
+// ============================================
+// GAME DATA
+// ============================================
+const GAME_DATA = {
+  title: "大学分水岭",
+  subtitle: "大二职业规划模拟器 · 2026",
+  rounds: [
+    // ── ROUND 1 ──
+    {
+      id: 1,
+      period: "大二上学期 · 2026年9月",
+      desc: "你是一名普通本科大二学生，专业是<strong>市场营销</strong>（可替换为你的实际专业）。GPA 3.0，从未系统接触过AI工具。<br><br>新学期伊始，校园里到处张贴着「AI+」微专业的海报，室友说要去报个Python班，而你还在犹豫……<br><br><em>这是你大学的<strong>第3个学期</strong>，距离毕业还有2年半。你的选择是？</em>",
+      choices: [
+        {
+          id: "1A", letter: "A",
+          text: "主动探索AI：报名学校的「AI+商业分析」微专业，开始学习ChatGPT/数据分析工具",
+          effects: { compositeAbility: 2, careerVision: 1, professionalBase: 0 },
+          feedback: "你迈出了关键的第一步！虽然刚开始有些吃力，但你发现AI工具能帮你快速完成市场调研报告，效率提升了3倍。你开始理解：<strong>AI不是替代你，而是放大你的能力。</strong>",
+          icon: "🚀"
+        },
+        {
+          id: "1B", letter: "B",
+          text: "稳扎稳打：专注专业课，争取把GPA刷到3.5以上，AI的事以后再说",
+          effects: { compositeAbility: 0, careerVision: 0, professionalBase: 3 },
+          feedback: "你的专业成绩稳步提升，教授开始注意到你。但你也发现，周围的同学已经开始用AI做课程作业了，你隐隐感到一丝不安……<strong>专业扎实是好事，但在2026年，这可能还不够。</strong>",
+          icon: "📚"
+        },
+        {
+          id: "1C", letter: "C",
+          text: "及时行乐：觉得AI离自己很远，先享受大学生活，大三大四再努力",
+          effects: { compositeAbility: -1, careerVision: -1, professionalBase: 0 },
+          feedback: "这学期过得确实很舒服——社团、游戏、聚餐……但当你刷到学长学姐的校招吐槽贴时，那句<strong>「大二不准备，大四两行泪」</strong>在你脑中挥之不去。",
+          icon: "🎮",
+          setFlags: ["procrastinated", "internshipLate"]
+        },
+      ]
+    },
+    // ── ROUND 2 ──
+    {
+      id: 2,
+      period: "大二下学期 · 2027年3月",
+      desc: "寒假结束回到学校，你听说好多学长学姐都在找<strong>暑期实习</strong>。辅导员在群里发了一条消息：「教育部双千计划微专业开始招生，名额有限。」<br><br>同时，朋友圈里有人晒出了字节、腾讯的实习offer，也有人开始报各种证书培训班……<br><br><em>暑假就在眼前，时间不等人。你的选择是？</em>",
+      choices: [
+        {
+          id: "2A", letter: "A",
+          text: "报名教育部「双千计划」中的数字营销/数据分析微专业，系统搭建知识体系",
+          effects: { compositeAbility: 3, careerVision: 1, professionalBase: 0 },
+          feedback: "你选了一门由头部企业和高校联合开设的微专业课程。不仅学到了实战技能，还拿到了<strong>企业认证证书</strong>。微专业学生的就业率显著高于同专业普通毕业生——你开始感受到「官方背书」的力量。",
+          icon: "🎓",
+          setFlags: ["microMajor"]
+        },
+        {
+          id: "2B", letter: "B",
+          text: "果断行动：精心准备简历，开始投递目标行业的暑期日常实习",
+          effects: { compositeAbility: 1, careerVision: 2, practicalExperience: 2 },
+          feedback: "投了20份简历，面了5家，终于拿到了一家公司的实习offer。虽然只是日常实习，但你已经比95%的同龄人更早进入实战状态。<strong>大二暑假是实习的黄金窗口</strong>——你抓住了它。",
+          icon: "💼",
+          setFlags: ["internshipEarly"]
+        },
+        {
+          id: "2C", letter: "C",
+          text: "跟风操作：报了一个Python速成班和一个心理咨询师培训班（但并不清楚为什么要学）",
+          effects: { compositeAbility: 1, careerVision: -1, professionalBase: 0 },
+          feedback: "钱花了，时间也花了，但你发现Python课只是教了基础语法，心理咨询师证书的含金量也远不如想象中高。<strong>盲目跟风考证</strong>，既浪费了时间，也没有形成真正的竞争力。你开始反思：我到底在追什么？",
+          icon: "😵",
+          setFlags: ["blindFollow"]
+        },
+        {
+          id: "2D", letter: "D",
+          text: "躺平观望：觉得「大二还早，先玩两年」，暑假回家休息",
+          effects: { compositeAbility: 0, careerVision: -1, practicalExperience: -1 },
+          feedback: "暑假过得很惬意。但开学后你发现，参加过微专业和实习的同学聊起行业时已经头头是道，而你连简历都还没写。<strong>实习时间线的陷阱</strong>——你踩中了最经典的那一个。",
+          icon: "🏖️",
+          setFlags: ["internshipLate"]
+        },
+      ]
+    },
+    // ── ROUND 3 ──
+    {
+      id: 3,
+      period: "大三上学期 · 2027年9月",
+      desc: "大三了。班里的气氛明显分化：有人已经手握两份实习经历，有人开始疯狂刷考公题库，有人在纠结要不要考研……<br><br>你也感到了一种前所未有的<strong>紧迫感</strong>。你的专业成绩尚可，但你知道：<strong>专业≠职业</strong>，大部分人最终从事的工作与本专业并非高度相关。<br><br><em>还剩一年半，你需要在「深度」和「广度」之间做出选择。你的选择是？</em>",
+      choices: [
+        {
+          id: "3A", letter: "A",
+          text: "参加全国大学生创新创业大赛，结合专业知识和AI工具做一个实际项目",
+          effects: { compositeAbility: 2, careerVision: 1, practicalExperience: 2 },
+          feedback: "你和团队用AI工具开发了一个智能营销系统，拿了省赛银奖。更重要的是，<strong>你有了一个可以写进简历的完整项目</strong>——从想法到落地的全流程经验，这正是企业最看重的。",
+          icon: "🏆"
+        },
+        {
+          id: "3B", letter: "B",
+          text: "决定考公考编：放弃专业相关方向，全力备考",
+          effects: { compositeAbility: -2, careerVision: 1, practicalExperience: 0 },
+          feedback: "你买了全套备考资料，每天泡图书馆刷题。这条路很稳，但竞争同样激烈——2026年国考报录比再创新高。<strong>你的复合能力积累暂停了</strong>，如果考公失利，你的退路会比较窄。",
+          icon: "📝",
+          setFlags: ["examOriented"]
+        },
+        {
+          id: "3C", letter: "C",
+          text: "独具慧眼：辅修「数字文博」微专业（文物修复+3D数字孪生，对接国家文化复兴战略）",
+          effects: { compositeAbility: 2, careerVision: 3, practicalExperience: 0 },
+          feedback: "这个选择让很多人不解——「学文物修复能有什么前途？」但你研究发现：<strong>文物修复+3D数字孪生，年薪可达30万+</strong>，而全国相关人才极度稀缺。冷门专业≠没有价值，关键在于<strong>复合化开发</strong>。",
+          icon: "🏛️",
+          setFlags: ["coldMajor"]
+        },
+        {
+          id: "3D", letter: "D",
+          text: "维持现状：继续专注本专业学习，不额外拓展方向",
+          effects: { compositeAbility: 0, careerVision: -1, practicalExperience: 0, professionalBase: 2 },
+          feedback: "你的专业基础越来越扎实，但你隐隐感到：在这个AI加速渗透的时代，<strong>单一技能正在快速贬值</strong>。你开始在深夜里焦虑地搜索「市场营销还有前途吗」……",
+          icon: "🤔"
+        },
+      ]
+    },
+    // ── ROUND 4 ──
+    {
+      id: 4,
+      period: "大三下学期至大四 · 2028年",
+      desc: "毕业近在眼前。校招季来了，各大企业的宣讲会排满了你的日程表。你看着自己这两年多的积累（或遗憾），<strong>到了最后的冲刺阶段</strong>。<br><br><em>这是你毕业前的最后一轮关键决策。你的选择是？</em>",
+      choices: [
+        {
+          id: "4A", letter: "A",
+          text: "精准出击：将「专业×AI」成果整合成作品集，精准投递头部企业校招岗位",
+          effects: { compositeAbility: 3, careerVision: 0, practicalExperience: 1 },
+          feedback: "你的简历上有微专业证书、竞赛奖项、实习经历——更重要的是，你能清晰地向面试官展示<strong>你如何用AI+专业能力解决实际问题</strong>。面试官的眼睛亮了。",
+          icon: "🎯"
+        },
+        {
+          id: "4B", letter: "B",
+          text: "稳中求胜：利用之前的实习关系争取转正，或通过内推渠道投递",
+          effects: { compositeAbility: 0, careerVision: 0, practicalExperience: 3 },
+          feedback: "之前实习时积累的人脉和表现派上了用场。<strong>暑期实习转正率超50%</strong>——你拿到了return offer，虽然薪资一般，但至少有了保底。",
+          icon: "🤝"
+        },
+        {
+          id: "4C", letter: "C",
+          text: "海投战术：匆忙赶出一份通用简历，海投100家公司",
+          effects: { compositeAbility: -1, careerVision: -1, practicalExperience: 0 },
+          feedback: "简历投出去了100份，收到的面试却寥寥无几。你发现：<strong>没有差异化的简历，在AI初筛阶段就被过滤掉了</strong>。核心岗位竞争比高达45:1，你只是分母之一。",
+          icon: "📤"
+        },
+        {
+          id: "4D", letter: "D",
+          text: "战略性撤退：发现准备不足，决定考研/读研缓冲两年",
+          effects: { compositeAbility: 1, careerVision: 0, practicalExperience: 0 },
+          feedback: "读研不是逃避，而是给自己更多时间积累复合能力。但你心里清楚：<strong>两年后你还是要面对同样的就业市场</strong>。希望到那时，你能带着更强的能力矩阵回来。",
+          icon: "📖",
+          setFlags: ["postponeGrad"]
+        },
+      ]
+    },
+  ],
+  endings: {
+    A: {
+      title: "复合精英",
+      grade: "A",
+      desc: "你成功构建了<strong>「专业×AI」能力矩阵</strong>。凭借微专业证书、竞赛奖项和扎实的实习经历，你在校招中脱颖而出，获得了头部企业的暑期实习转正offer。<br><br>你的起薪比同专业平均水平高出约<strong>30%</strong>——复合型人才在2028年的就业市场中，依然是稀缺资源。<br><br><em>「你证明了：在AI时代，最有竞争力的不是纯技术人员，而是能用AI放大专业价值的复合型人才。」</em>",
+      data: "📊 数据显示：复合型人才起薪提升约30%，头部企业暑期实习转正率超50%",
+      condition: (s, f) => s.compositeAbility >= 7 && s.practicalExperience >= 3
+    },
+    B: {
+      title: "动态生存者",
+      grade: "B",
+      desc: "虽然你的起点并非最高，专业也可能被视为「冷门」，但你通过<strong>动态调整方向</strong>和敏锐的战略眼光，进入了国家战略新兴行业（如智慧农业、数字文博、低空经济等）。<br><br>这里竞争压力远小于热门赛道，但发展空间巨大。你凭借<strong>「冷门专业+新技术」的差异化组合</strong>，在蓝海市场中稳步成长。<br><br><em>「你证明了：没有绝对的冷门专业，只有未被复合化开发的能力。国家战略指向哪里，机会就在哪里。」</em>",
+      data: "📊 数据显示：冷门战略专业人才缺口巨大，竞争压力远小于热门赛道",
+      condition: (s, f) => (f.coldMajor || (s.careerVision >= 4 && s.compositeAbility >= 4))
+    },
+    C: {
+      title: "迷茫跟风者",
+      grade: "C",
+      desc: "你一路追逐「热门」——考公、考证、转码……但每一次都浅尝辄止，没有形成真正的<strong>复合能力</strong>。当校招来临时，你发现自己和成千上万同样「什么都懂一点，什么都不精」的竞争者挤在同一条赛道上。<br><br>你最终找到了一份工作，但薪资和发展空间都不理想。你开始后悔：<strong>如果当初目标更清晰一些，结果会不会不同？</strong><br><br><em>「盲目追逐热门，不如认清自己的差异化优势。内卷的终点，往往不是成功，而是疲惫。」</em>",
+      data: "📊 数据显示：2026届核心岗位竞争比高达45:1，盲目跟风者沦为分母",
+      condition: (s, f) => (f.examOriented || f.blindFollow) && s.compositeAbility < 6
+    },
+    D: {
+      title: "传统安稳型",
+      grade: "D",
+      desc: "你的专业基础非常扎实，这让你在传统岗位的竞争中占据了一定优势。你最终找到了一份<strong>稳定的传统岗位</strong>——可能是中小学教师、基层公务员或传统企业的基础岗位。<br><br>虽然薪资不算高，但生活安稳。只是偶尔在深夜刷到同学在AI行业的动态时，你会想：<strong>如果我当初多学一点AI技能，现在会不会不一样？</strong><br><br><em>「稳扎稳打没有错，但在AI时代，不进化就意味着相对退步。长期满意度，还需要持续学习来支撑。」</em>",
+      data: "📊 数据显示：传统岗位受AI冲击明显，单一技能者长期竞争力逐年下降",
+      condition: (s, f) => s.professionalBase >= 5 && s.compositeAbility < 7 && !f.procrastinated
+    },
+    E: {
+      title: "觉醒太晚",
+      grade: "E",
+      desc: "大四之前，你几乎没有认真思考过职业规划。当你终于开始投简历时，才发现自己既没有实习经历，也不会使用AI工具，专业成绩也平平。<br><br>你最终只能接受一份<strong>基础岗位</strong>的工作，薪资和发展空间都非常有限。但这不是终点——<strong>种一棵树最好的时间是十年前，其次是现在</strong>。<br><br><em>「觉醒太晚不可怕，可怕的是从不醒来。从今天开始构建你的能力矩阵，两年后你依然可以逆风翻盘。」</em>",
+      data: "📊 数据显示：大二开始规划的学生，毕业时竞争力指数显著高于大四才开始准备的学生",
+      condition: () => true // fallback
+    },
+  }
+};
+
+// ============================================
+// GAME STATE
+// ============================================
+let gameState = {
+  currentRound: 0,       // 0 = title screen, 1-4 = rounds
+  scores: {
+    compositeAbility: 0,  // 复合能力
+    careerVision: 0,      // 职业视野
+    practicalExperience: 0, // 实践经验
+    professionalBase: 3,  // 专业基础 (baseline)
+  },
+  flags: {},
+  history: [],
+  ending: null,
+};
+
+// ============================================
+// RENDER FUNCTIONS
+// ============================================
+const gameContainer = document.getElementById('game-container');
+
+function renderTitleScreen() {
+  gameContainer.innerHTML = `
+    <div class="game-title-screen">
+      <div class="game-badge">🏫 互动叙事模拟器</div>
+      <h1 class="game-title">${GAME_DATA.title}</h1>
+      <p class="game-subtitle">${GAME_DATA.subtitle}<br>一场关于选择、命运与职业规划的沉浸式体验</p>
+      <p style="color:#6b7d8e;font-size:0.85rem;margin-bottom:2rem;">⏱ 约3~5分钟 &nbsp;|&nbsp; 🔄 4轮关键选择 &nbsp;|&nbsp; 🎯 5种结局</p>
+      <button class="game-start-btn" onclick="startGame()">开始模拟 ▸</button>
+      <p style="color:#8a9bb0;font-size:0.75rem;margin-top:1.2rem;">⌨ 也可以按数字键 1-4 选择选项</p>
+    </div>
+  `;
+}
+
+function renderRound(roundIndex) {
+  const round = GAME_DATA.rounds[roundIndex];
+  const totalRounds = GAME_DATA.rounds.length;
+
+  // Build progress dots
+  let progressHTML = '';
+  for (let i = 0; i < totalRounds; i++) {
+    let cls = '';
+    if (i < roundIndex) cls = 'done';
+    else if (i === roundIndex) cls = 'current';
+    progressHTML += `<div class="game-progress-dot ${cls}"></div>`;
+  }
+
+  // Show current scores visually
+  const scoreLabels = {
+    compositeAbility: '复合能力',
+    careerVision: '职业视野',
+    practicalExperience: '实践经验',
+    professionalBase: '专业基础'
+  };
+
+  let statusHTML = '';
+  for (const [key, label] of Object.entries(scoreLabels)) {
+    const val = gameState.scores[key];
+    statusHTML += `<div class="game-stat"><span class="label">${label}</span><span class="value">${val >= 0 ? '+' : ''}${val}</span></div>`;
+  }
+
+  // Build choices
+  let choicesHTML = '';
+  round.choices.forEach((ch, idx) => {
+    choicesHTML += `
+      <button class="game-choice-btn" onclick="makeChoice(${roundIndex}, ${idx})" data-key="${idx + 1}">
+        <span class="choice-letter">${ch.letter}</span>
+        <span>${ch.text}</span>
+      </button>
+    `;
+  });
+
+  gameContainer.innerHTML = `
+    <div class="game-card">
+      <div class="game-progress">${progressHTML}</div>
+      <div class="game-round-badge">
+        <span class="dot"></span>
+        <span>${round.period} &nbsp;·&nbsp; 第 ${roundIndex + 1}/${totalRounds} 轮</span>
+      </div>
+      <div class="game-narrative">${round.desc}</div>
+      <div class="game-status">${statusHTML}</div>
+      <div class="game-choices">${choicesHTML}</div>
+      <p style="color:#8a9bb0;font-size:0.72rem;margin-top:1rem;">⌨ 按数字键 1~${round.choices.length} 快速选择</p>
+    </div>
+  `;
+
+  // Reveal animation
+  const card = gameContainer.querySelector('.game-card');
+  card.style.animation = 'none';
+  card.offsetHeight; // trigger reflow
+  card.style.animation = 'fadeInUp 0.5s ease-out';
+}
+
+function showFeedback(choice) {
+  const overlay = document.getElementById('feedback-overlay');
+  document.getElementById('feedback-icon').textContent = choice.icon;
+  document.getElementById('feedback-text').innerHTML = choice.feedback;
+
+  // Build change tags
+  let changesHTML = '';
+  const labels = {
+    compositeAbility: '复合能力',
+    careerVision: '职业视野',
+    practicalExperience: '实践经验',
+    professionalBase: '专业基础'
+  };
+  for (const [key, val] of Object.entries(choice.effects)) {
+    if (val === 0) continue;
+    const label = labels[key] || key;
+    const cls = val > 0 ? 'positive' : 'negative';
+    const sign = val > 0 ? '+' : '';
+    changesHTML += `<span class="feedback-change ${cls}">${sign}${val} ${label}</span>`;
+  }
+  document.getElementById('feedback-changes').innerHTML = changesHTML;
+
+  overlay.style.display = 'flex';
+}
+
+function closeFeedback() {
+  document.getElementById('feedback-overlay').style.display = 'none';
+  advanceGame();
+}
+
+function renderEnding(endingKey) {
+  const ending = GAME_DATA.endings[endingKey];
+  const bridgeHTML = `
+    <div class="ending-bridge">
+      <p>🎤 <strong>游戏结束，但现实中的选择才刚刚开始。</strong></p>
+      <p>游戏中的不同命运，在现实中正真实上演。大二、大三——正是职业规划的<strong>黄金窗口</strong>。你今天的每一个选择，都在塑造两年后校招时的你。</p>
+      <p>接下来，让我们系统探讨：<strong>在AI时代，如何做出真正正确的职业规划。</strong></p>
+    </div>
+  `;
+
+  gameContainer.innerHTML = `
+    <div class="game-card ending-screen">
+      <div class="ending-grade">${ending.grade}</div>
+      <div class="ending-title">结局${ending.grade}：${ending.title}</div>
+      <div class="ending-desc">${ending.desc}</div>
+      <div class="ending-data">${ending.data}</div>
+      ${bridgeHTML}
+      <button class="scroll-down-btn" onclick="revealPresentation()">
+        进入正式演讲 <span class="arrow">↓</span>
+      </button>
+      <p style="color:#8a9bb0;font-size:0.75rem;margin-top:1rem;">
+        <button onclick="resetGame()" style="background:none;border:1px solid rgba(0,0,0,0.12);color:#5a6c7d;padding:0.4rem 1.2rem;border-radius:50px;cursor:pointer;font-family:inherit;">🔄 重新开始模拟</button>
+      </p>
+    </div>
+  `;
+}
+
+// ============================================
+// GAME LOGIC
+// ============================================
+function startGame() {
+  gameState = {
+    currentRound: 0,
+    scores: { compositeAbility: 0, careerVision: 0, practicalExperience: 0, professionalBase: 3 },
+    flags: {},
+    history: [],
+    ending: null,
+  };
+  renderRound(0);
+}
+
+function makeChoice(roundIndex, choiceIndex) {
+  const round = GAME_DATA.rounds[roundIndex];
+  const choice = round.choices[choiceIndex];
+
+  // Apply effects
+  for (const [key, val] of Object.entries(choice.effects)) {
+    gameState.scores[key] = (gameState.scores[key] || 0) + val;
+  }
+
+  // Set flags
+  if (choice.setFlags) {
+    choice.setFlags.forEach(f => gameState.flags[f] = true);
+  }
+
+  // Record history
+  gameState.history.push({ round: roundIndex + 1, choice: choice.id });
+
+  // Show feedback
+  gameState.currentRound = roundIndex + 1;
+  showFeedback(choice);
+}
+
+function advanceGame() {
+  if (gameState.currentRound >= GAME_DATA.rounds.length) {
+    // Calculate ending
+    const endingKey = calculateEnding();
+    gameState.ending = endingKey;
+    renderEnding(endingKey);
+  } else {
+    renderRound(gameState.currentRound);
+  }
+}
+
+function calculateEnding() {
+  const s = gameState.scores;
+  const f = gameState.flags;
+
+  // Priority-based ending selection
+  if (GAME_DATA.endings.A.condition(s, f)) return 'A';
+  if (GAME_DATA.endings.B.condition(s, f)) return 'B';
+  if (GAME_DATA.endings.C.condition(s, f)) return 'C';
+  if (GAME_DATA.endings.D.condition(s, f)) return 'D';
+  return 'E';
+}
+
+function resetGame() {
+  document.getElementById('transition-divider').style.display = 'none';
+  document.getElementById('presentation-section').style.display = 'none';
+  document.getElementById('floating-nav').style.display = 'none';
+  gameState = {
+    currentRound: 0,
+    scores: { compositeAbility: 0, careerVision: 0, practicalExperience: 0, professionalBase: 3 },
+    flags: {},
+    history: [],
+    ending: null,
+  };
+  renderTitleScreen();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================
+// TRANSITION TO PRESENTATION
+// ============================================
+function revealPresentation() {
+  document.getElementById('transition-divider').style.display = 'block';
+  document.getElementById('presentation-section').style.display = 'block';
+  document.getElementById('floating-nav').style.display = 'flex';
+
+  // Smooth scroll to presentation
+  setTimeout(() => {
+    document.getElementById('transition-divider').scrollIntoView({ behavior: 'smooth' });
+  }, 300);
+
+  // Observe slides for reveal animation
+  observeSlides();
+}
+
+function observeSlides() {
+  const slides = document.querySelectorAll('.pres-slide');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('reveal');
+      }
+    });
+  }, { threshold: 0.15 });
+  slides.forEach(s => observer.observe(s));
+}
+
+// ============================================
+// UTILITIES
+// ============================================
+function scrollToSlide(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth' });
+}
+
+function openLightbox(src) {
+  const lb = document.getElementById('lightbox');
+  const img = document.getElementById('lightbox-img');
+  img.src = src;
+  lb.style.display = 'flex';
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').style.display = 'none';
+}
+
+// ============================================
+// KEYBOARD SHORTCUTS
+// ============================================
+document.addEventListener('keydown', (e) => {
+  // Only in game mode
+  if (gameState.ending !== null) return;
+  if (gameState.currentRound >= GAME_DATA.rounds.length) return;
+
+  const overlay = document.getElementById('feedback-overlay');
+  if (overlay.style.display === 'flex') {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      closeFeedback();
+    }
+    return;
+  }
+
+  const round = GAME_DATA.rounds[gameState.currentRound];
+  if (!round) return;
+
+  const num = parseInt(e.key);
+  if (num >= 1 && num <= round.choices.length) {
+    e.preventDefault();
+    makeChoice(gameState.currentRound, num - 1);
+  }
+});
+
+// Lightbox close with Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeLightbox();
+  }
+});
+
+// ============================================
+// INIT
+// ============================================
+renderTitleScreen();
+</script>
+
+</body>
+</html>
